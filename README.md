@@ -1,6 +1,10 @@
 # Taller BMAD Method - GULAG 2025
 Taller Aniversario 2025 - BMAD Method 
 
+## Instalador preferido
+
+- [Brew](https://brew.sh/)
+
 ## Links herramientas utilizadas en el taller
 
 - [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD)
