@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokedex UI - Hello World</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-red-500 text-white p-8">
+    <h1 class="text-4xl font-bold">Pokedex Demo - Initial Setup</h1>
+    <p class="mt-4">Hello World! HTMX and Tailwind loaded.</p>
+    <button hx-get="/api/" hx-target="#result" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
+        Fetch API Message
+    </button>
+    <div id="result" class="mt-4"></div>
+</body>
+</html>
