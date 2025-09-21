@@ -13,3 +13,4 @@ Taller Aniversario 2025 - BMAD Method
 - [Openrouter](https://openrouter.ai/)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
 - [opencode](https://opencode.ai/)
+

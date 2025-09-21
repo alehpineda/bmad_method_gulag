@@ -218,5 +218,14 @@
     "bmad:infrastructure-devops:create-doc": {
       "template": "{file:./.bmad-infrastructure-devops/tasks/create-doc.md}"
     }
+  },
+  "provider": {
+    "openrouter": {
+      "models": {
+        "x-ai/grok-4-fast:free": {
+          "reasoning": true,
+        }
+      }
+    }
   }
 }
