@@ -6,6 +6,7 @@ from sqlmodel import Session, create_engine, select
 from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, create_db_and_tables
 from src.schemas import PokemonData
 
+# Create typer app
 app = typer.Typer(help="Pokedex ETL CLI")
 
 SAMPLE_BULBASAUR = {
@@ -96,8 +97,11 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
     session.commit()
     typer.echo(f"Inserted {norm_data.name} (ID: {norm_data.id}) successfully.")
 
-@app.command()
-def load(identifier: int, sample: bool = typer.Option(False, "--sample")):
+@app.command("load")
+def load_pokemon(
+    identifier: int = typer.Argument(help="Pokemon ID to load"),
+    sample: bool = typer.Option(False, "--sample", help="Use sample data instead of API")
+):
     """Load and insert Pokemon data by ID (use --sample for fallback)."""
     create_db_and_tables()
     if sample:
