@@ -226,6 +226,13 @@
           "reasoning": true,
         }
       }
+    },
+    "xai": {
+      "models": {
+        "grok-4-fast": {
+          "reasoning": true,
+        }
+      }
     }
   }
 }
