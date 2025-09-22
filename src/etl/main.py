@@ -3,12 +3,12 @@ import typer
 from typing import Dict, Any
 import httpx
 from sqlmodel import Session, create_engine, select
-from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, engine
-from src.schemas import PokemonData
+from ..models import Pokemon, Type, PokemonType, PokemonStat, Sprite
+from ..schemas import PokemonData
 
 app = typer.Typer(help="Pokedex ETL CLI")
 
-SAMPLE_BULBASAUR = {  # Fallback sample from docs/1.json (truncated for brevity, full in docs/1.json)
+SAMPLE_BULBASAUR = {
     "id": 1,
     "name": "bulbasaur",
     "height": 7,
@@ -26,9 +26,11 @@ SAMPLE_BULBASAUR = {  # Fallback sample from docs/1.json (truncated for brevity,
         "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
         "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/1.png",
         "back_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png",
-        # Note: front_female is null for Bulbasaur, skipped in normalize
+        "back_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/shiny/1.png",
     }
 }
+
+engine = create_engine("sqlite:///pokedex.db")
 
 def get_session():
     return Session(engine)
@@ -50,13 +52,12 @@ def normalize_data(data: Dict[str, Any]) -> PokemonData:
     normalized = {
         "id": data["id"],
         "name": data["name"],
-        "height": data["height"],  # Store as decimeters, convert in API
-        "weight": data["weight"],  # Store as hectograms
+        "height": data["height"],
+        "weight": data["weight"],
         "types": [{"slot": t["slot"], "type_name": t["type"]["name"]} for t in data.get("types", [])],
         "stats": [{"stat_name": s["stat"]["name"], "base_stat": s["base_stat"]} for s in data.get("stats", [])],
-        "sprites": {k: v for k, v in data.get("sprites", {}).items() if v is not None}  # Skip nulls
+        "sprites": {k: v for k, v in data.get("sprites", {}).items() if v is not None}
     }
-    # Validation
     if len(normalized["stats"]) != 6:
         raise ValueError(f"Invalid stats count: expected 6, got {len(normalized['stats'])}")
     if len(normalized["types"]) not in (1, 2):
@@ -65,46 +66,38 @@ def normalize_data(data: Dict[str, Any]) -> PokemonData:
 
 def insert_idempotent(session: Session, norm_data: PokemonData):
     """Idempotent insert: Check existence, upsert related entities."""
-    # Check Pokemon exists
     existing = session.exec(select(Pokemon).where(Pokemon.id == norm_data.id)).first()
     if existing:
         typer.echo(f"Pokemon {norm_data.id} ({norm_data.name}) already exists; skipping.")
         return
 
-    # Insert Pokemon
-    pokemon = Pokemon(id=norm_data.id, name=norm_data.name, height=norm_data.height, weight=norm_data.weight)
-    session.add(pokemon)
-    session.flush()  # Flush to get ID
+    p = Pokemon(id=norm_data.id, name=norm_data.name, height=norm_data.height, weight=norm_data.weight)
+    session.add(p)
+    session.flush()
 
-    # Upsert Types and PokemonType
     for t in norm_data.types:
-        typ = session.exec(select(Type).where(Type.name == t["type_name"])).first()
-        if not typ:
-            typ = Type(name=t["type_name"])
-            session.add(typ)
-            session.flush()  # Get type ID
-        pt = PokemonType(pokemon_id=pokemon.id, type_id=typ.id, slot=t["slot"])
-        # Check if exists to avoid dup
-        existing_pt = session.exec(select(PokemonType).where(PokemonType.pokemon_id == pokemon.id, PokemonType.type_id == typ.id)).first()
-        if not existing_pt:
-            session.add(pt)
+        type_obj = session.exec(select(Type).where(Type.name == t["type_name"])).first()
+        if not type_obj:
+            type_obj = Type(name=t["type_name"])
+            session.add(type_obj)
+            session.flush()
+        pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])
+        session.add(pt)
 
-    # Insert Stats
     for s in norm_data.stats:
-        stat = PokemonStat(pokemon_id=pokemon.id, stat_name=s["stat_name"], base_stat=s["base_stat"])
-        # Stats are unique per pokemon/stat_name, so no dup check needed if PK
-        session.add(stat)
+        ps = PokemonStat(pokemon_id=p.id, stat_name=s["stat_name"], base_stat=s["base_stat"])
+        session.add(ps)
 
-    # Insert Sprites (only non-null)
     for variant, url in norm_data.sprites.items():
-        sprite = Sprite(pokemon_id=pokemon.id, variant=variant, url=url)
-        # PK prevents dups
-        session.add(sprite)
+        sp = Sprite(pokemon_id=p.id, variant=variant, url=url)
+        session.add(sp)
 
     session.commit()
     typer.echo(f"Inserted {norm_data.name} (ID: {norm_data.id}) successfully.")
 
-@app.command()\ndef load(identifier: int, sample: bool = typer.Option(False, "--sample")):\n    \"\"\"Load and insert Pokemon data by ID (use --sample for fallback).\"\"\"
+@app.command()
+def load(identifier: int, sample: bool = typer.Option(False, "--sample")):
+    """Load and insert Pokemon data by ID (use --sample for fallback)."""
     if sample:
         data = SAMPLE_BULBASAUR
     else:
@@ -115,4 +108,4 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
     typer.echo("ETL process completed.")
 
 if __name__ == "__main__":
-    typer.run(app)
+    app()
