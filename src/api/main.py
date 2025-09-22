@@ -8,7 +8,14 @@ def extract_model(result):
     """Extract SQLModel object from SQLAlchemy Row if needed"""
     if result is None:
         return None
-    return result[0] if hasattr(result, '__iter__') and not isinstance(result, str) else result
+    # If it's already a SQLModel object (has expected attributes), return it
+    if hasattr(result, 'id') or hasattr(result, 'name'):
+        return result
+    # Otherwise try to extract from Row
+    try:
+        return result[0] if len(result) > 0 else result
+    except (TypeError, IndexError):
+        return result
 
 def get_db():
     db = Session(engine)

@@ -1,7 +1,7 @@
 # Pokedex MVP Runbook
 
 ## Environment Setup
-1. Clone the repo: `git clone &lt;repo-url&gt;`
+1. Clone the repo: `git clone <repo-url>`
 2. Navigate: `cd bmad_method_gulag`
 3. Install Python 3.12+ and uv: Follow https://docs.astral.sh/uv/getting-started/installation/
 4. Sync dependencies: `uv sync --dev`
@@ -9,7 +9,7 @@
 
 ## Database Initialization
 - The app uses SQLite: `pokedex.db` (created on first run or via ETL)
-- Run ETL to populate: `uv run python src/etl/main.py load 1` (loads Bulbasaur)
+- Run ETL to populate: `uv run python src/etl/main.py 1` (loads Bulbasaur)
 
 ## Running the Application
 1. Start the server: `uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000`
@@ -19,7 +19,7 @@
    - Should return JSON with Bulbasaur details
 
 ## Testing E2E
-1. Load data: `uv run python src/etl/main.py load 1`
+1. Load data: `uv run python src/etl/main.py 1`
 2. Start app (as above)
 3. Test API: `curl http://localhost:8000/pokemon/1 | jq .name` → "bulbasaur"
 4. Test UI:

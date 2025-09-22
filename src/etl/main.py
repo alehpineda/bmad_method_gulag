@@ -83,14 +83,11 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
             session.add(type_obj)
             session.flush()
         
-        # Extract the type object from Row if needed
-        if hasattr(type_obj, '__iter__') and not isinstance(type_obj, str):
-            type_obj = type_obj[0]
-        
+        # type_obj should be a Type object here, no extraction needed
         if type_obj.id is None:
             raise ValueError(f"Type {t['type_name']} was not properly saved to database")
         
-        pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])  # type: ignore [arg-type]
+        pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])
         session.add(pt)
 
     for s in norm_data.stats:

@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from src.api.main import app
 from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite
-from sqlmodel import SQLModel, create_engine, Session, select
+from sqlmodel import SQLModel, create_engine, Session
 
 @pytest.fixture
 def test_client():
