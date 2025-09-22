@@ -6,6 +6,7 @@ from sqlmodel import Session, create_engine, select
 from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, create_db_and_tables
 from src.schemas import PokemonData
 
+# Create typer app
 app = typer.Typer(help="Pokedex ETL CLI")
 
 SAMPLE_BULBASAUR = {
@@ -81,8 +82,12 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
             type_obj = Type(name=t["type_name"])
             session.add(type_obj)
             session.flush()
-        type_id = type_obj.id  # type: int
-        pt = PokemonType(pokemon_id=p.id, type_id=type_id, slot=t["slot"])  # type: ignore [arg-type]
+        
+        # type_obj should be a Type object here, no extraction needed
+        if type_obj.id is None:
+            raise ValueError(f"Type {t['type_name']} was not properly saved to database")
+        
+        pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])
         session.add(pt)
 
     for s in norm_data.stats:
@@ -97,7 +102,10 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
     typer.echo(f"Inserted {norm_data.name} (ID: {norm_data.id}) successfully.")
 
 @app.command()
-def load(identifier: int, sample: bool = typer.Option(False, "--sample")):
+def load(
+    identifier: int = typer.Argument(help="Pokemon ID to load"),
+    sample: bool = typer.Option(False, "--sample", help="Use sample data instead of API")
+):
     """Load and insert Pokemon data by ID (use --sample for fallback)."""
     create_db_and_tables()
     if sample:
