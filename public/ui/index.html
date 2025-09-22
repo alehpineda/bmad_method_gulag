@@ -3,117 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokedex MVP</title>
+    <title>Pokedex MVP - Gen 1 Edition</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Press Start 2P', cursive; }
+        .type-grass { background-color: #10b981; } /* green */
+        .type-poison { background-color: #8b5cf6; } /* purple */
+        .type-fire { background-color: #ef4444; } /* red */
+        /* Add more type colors as needed */
+        .stat-hp { background-color: #10b981; } /* green */
+        .stat-attack { background-color: #ef4444; } /* red */
+        .stat-defense { background-color: #3b82f6; } /* blue */
+        .stat-special-attack { background-color: #f59e0b; } /* yellow */
+        .stat-special-defense { background-color: #8b5cf6; } /* purple */
+        .stat-speed { background-color: #f97316; } /* orange */
     </style>
 </head>
-<body class="bg-white text-black min-h-screen p-4">
+<body class="bg-gray-100 text-black min-h-screen p-4">
     <!-- Header -->
     <header class="bg-red-500 text-white text-center text-2xl p-4 mb-4 rounded-lg shadow-lg">
-        POKEDEX
+        POKEDEX - Gen 1 Edition
     </header>
 
-    <!-- Search Input -->
-    <div class="max-w-md mx-auto mb-4">
+    <!-- Search Form -->
+    <form id="search-form" class="max-w-md mx-auto mb-4 space-y-2">
         <input 
             type="text" 
-            id="search" 
+            id="search-input" 
+            name="identifier" 
             placeholder="Enter ID or name (e.g., 1 or bulbasaur)" 
-            class="w-full p-2 border-2 border-red-500 rounded text-black"
-            hx-post="/pokemon" 
-            hx-trigger="keyup[enter] changed delay:500ms" 
-            hx-target="#pokemon-card" 
-            hx-indicator="#loading"
-            hx-on::after-request="if(event.detail.xhr.status === 404) { document.getElementById('error').classList.remove('hidden'); }"
+            class="w-full p-2 border-2 border-red-500 rounded text-black focus:outline-none focus:ring-2 focus:ring-red-500"
+            required
         >
         <button 
-            hx-post="/pokemon" 
-            hx-include="#search" 
-            hx-target="#pokemon-card" 
-            hx-indicator="#loading"
-            class="w-full mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+            type="submit" 
+            class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors"
         >
             Load Pokemon
         </button>
-    </div>
-
-    <!-- Loading Indicator -->
-    <div id="loading" class="htmx-indicator hidden text-center text-red-500 animate-spin">Loading...</div>
-
-    <!-- Error Display -->
-    <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    </form>
+    <div id="loading" class="htmx-indicator hidden text-center text-red-500">Loading...</div>
+    <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center" role="alert">
         Pokemon not found. Try a valid ID or name.
     </div>
 
-    <!-- Pokemon Card (Target for HTMX) -->
-    <div id="pokemon-card" class="max-w-4xl mx-auto bg-white border-4 border-red-500 rounded-lg shadow-lg p-4 hidden">
+    <!-- Pokemon Card -->
+    <div id="pokemon-card" class="max-w-2xl mx-auto bg-white border-4 border-red-500 rounded-lg shadow-lg p-6 hidden">
         <!-- Header -->
-        <h1 id="header" class="text-3xl font-bold text-center mb-4"></h1>
-
+        <div id="header" class="text-3xl font-bold text-center mb-4 capitalize"></div>
+        
         <!-- Physical Stats -->
-        <div id="physical" class="grid grid-cols-2 gap-4 mb-4 p-4 border-b"></div>
-
+        <div id="physical" class="text-sm text-gray-600 flex justify-between mb-4 p-4 bg-gray-50 rounded"></div>
+        
         <!-- Types -->
         <div id="types" class="flex justify-center gap-2 mb-4 p-4"></div>
-
-        <!-- Stats Bars -->
-        <div id="stats" class="grid md:grid-cols-2 gap-4 mb-4 p-4"></div>
-
+        
         <!-- Sprite Viewer -->
-        <div id="sprites" class="flex flex-col md:flex-row items-center gap-4 p-4 border-t">
-            <div class="flex flex-col items-center">
-                <img 
-                    id="sprite-img" 
-                    src="" 
-                    alt="Pokemon sprite" 
-                    class="w-48 h-48 border-4 border-red-500 object-contain mb-4"
-                    role="img" 
-                    aria-label="Current Pokemon sprite"
-                >
-                <div id="sprite-error" class="hidden text-red-500 mb-2">Variant unavailable</div>
-                <div class="flex gap-2">
-                    <button 
-                        class="bg-white border-2 border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-500 hover:text-white" 
-                        hx-get="/pokemon/1/sprites/front_default" 
-                        hx-target="#sprite-img" 
-                        hx-swap="attr:src" 
-                        aria-label="Default sprite"
-                    >
-                        Default
-                    </button>
-                    <button 
-                        hx-get="/pokemon/1/sprites/front_shiny" 
-                        hx-target="#sprite-img" 
-                        hx-swap="attr:src" 
-                        aria-label="Shiny sprite"
-                    >
-                        Shiny
-                    </button>
-                    <button 
-                        hx-get="/pokemon/1/sprites/back_female" 
-                        hx-target="#sprite-img" 
-                        hx-swap="attr:src" 
-                        aria-label="Female sprite"
-                    >
-                        Female
-                    </button>
-                    <!-- Add more toggles dynamically from API -->
-                </div>
-            </div>
+        <div id="sprite-viewer" class="text-center mb-4 p-4">
+            <div id="sprite-toggles" class="flex justify-center gap-2 mb-2 flex-wrap"></div>
+            <img 
+                id="sprite-img" 
+                src="" 
+                alt="" 
+                class="w-48 h-48 mx-auto rounded shadow-lg border-2 border-gray-300 object-contain"
+                role="img" 
+                aria-label="Pokemon sprite"
+            >
+            <p id="sprite-fallback" class="text-gray-500 mt-2 hidden">Sprite unavailable - showing default.</p>
+        </div>
+        
+        <!-- Stats -->
+        <div id="stats" class="space-y-2 p-4">
+            <h3 class="font-semibold mb-2 text-center">Base Stats</h3>
         </div>
     </div>
 
     <script>
-        // Minimal JS for fallbacks (HTMX onError)
+        // HTMX config for JSON parsing
         document.body.addEventListener('htmx:afterRequest', function(e) {
-            if (e.detail.xhr.status === 404 && e.detail.target.id === 'sprite-img') {
-                e.detail.target.src = e.detail.target.dataset.defaultSrc || '';  // Fallback to default
-                document.getElementById('sprite-error').classList.remove('hidden');
+            if (e.detail.target.id === 'pokemon-card' && e.detail.xhr.responseText) {
+                try {
+                    const data = JSON.parse(e.detail.xhr.responseText);
+                    if (data.detail) { // Error
+                        document.getElementById('error').textContent = data.detail;
+                        document.getElementById('error').classList.remove('hidden');
+                        document.getElementById('pokemon-card').classList.add('hidden');
+                    } else {
+                        populateCard(data);
+                        document.getElementById('error').classList.add('hidden');
+                    }
+                } catch (err) {
+                    console.error('JSON parse error:', err);
+                }
+            } else if (e.detail.target.id === 'sprite-img') {
+                // Sprite toggle fallback
+                if (e.detail.xhr.status === 404) {
+                    document.getElementById('sprite-img').src = document.getElementById('sprite-img').dataset.defaultSrc || '';
+                    document.getElementById('sprite-fallback').classList.remove('hidden');
+                }
             }
+        });
+
+        function populateCard(data) {
+            // Header
+            document.getElementById('header').innerText = `#${data.id} ${data.name.charAt(0).toUpperCase() + data.name.slice(1)}`;
+            
+            // Physical
+            document.getElementById('physical').innerHTML = `
+                <span>Height: ${data.height_m} m</span>
+                <span>Weight: ${data.weight_kg} kg</span>
+            `;
+            
+            // Types badges
+            const typesDiv = document.getElementById('types');
+            typesDiv.innerHTML = data.types.map(t => 
+                `<span class="type-${t.name} px-3 py-1 rounded-full text-white text-xs capitalize" role="badge">${t.name}</span>`
+            ).join('');
+            
+            // Default sprite
+            const defaultSrc = data.sprites.front_default || '';
+            document.getElementById('sprite-img').src = defaultSrc;
+            document.getElementById('sprite-img').alt = `${data.name} front default sprite`;
+            document.getElementById('sprite-img').dataset.defaultSrc = defaultSrc;
+            document.getElementById('sprite-fallback').classList.add('hidden');
+            
+            // Sprite toggles
+            const togglesDiv = document.getElementById('sprite-toggles');
+            const variants = ['front_default', 'front_shiny', 'back_default', 'front_female'];
+            togglesDiv.innerHTML = variants.map(v => {
+                const url = data.sprites[v];
+                if (url) {
+                    return `<button 
+                        hx-get="/pokemon/${data.id}/sprites/${v}" 
+                        hx-target="#sprite-img" 
+                        hx-swap="outerHTML"
+                        class="px-3 py-1 bg-gray-200 rounded text-sm hover:bg-gray-300 transition-colors" 
+                        aria-label="${v.replace('_', ' ')} sprite"
+                    >${v.replace('_', ' ').replace('front ', '').replace('back ', '').capitalize()}</button>`;
+                }
+                return ''; // Skip unavailable
+            }).join('');
+            
+            // Stats bars
+            const statsDiv = document.getElementById('stats');
+            const statColors = {
+                'hp': 'stat-hp',
+                'attack': 'stat-attack',
+                'defense': 'stat-defense',
+                'special-attack': 'stat-special-attack',
+                'special-defense': 'stat-special-defense',
+                'speed': 'stat-speed'
+            };
+            statsDiv.innerHTML = data.stats.map(s => {
+                const percent = (s.base_stat / 255 * 100).toFixed(1);
+                const colorClass = statColors[s.name] || 'bg-gray-500';
+                return `
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm capitalize w-32">${s.name.replace('-', ' ')}:</span>
+                        <div class="w-32 bg-gray-200 rounded-full h-2">
+                            <div class="${colorClass} h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="text-sm">${s.base_stat}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('pokemon-card').classList.remove('hidden');
+        }
+
+        // Form submit with HTMX
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('search-input').value;
+            htmx.ajax('POST', '/pokemon', {values: {identifier: identifier}, target: '#pokemon-card'});
         });
     </script>
 </body>
