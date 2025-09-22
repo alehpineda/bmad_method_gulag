@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, select
 from sqlalchemy.orm import relationship
 
 class Pokemon(SQLModel, table=True):
-    id: int = Field(primary_key=True, sa_column=Column(Integer, autoincrement=False))
+    id: int = Field(sa_column=Column(Integer, primary_key=True, autoincrement=False))
     name: str = Field(index=True)
     height: int  # decimeters
     weight: int  # hectograms
@@ -15,7 +15,7 @@ class Pokemon(SQLModel, table=True):
     sprites: List["Sprite"] = Relationship(back_populates="pokemon")
 
 class Type(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True, sa_column=Column(Integer, autoincrement=True))
+    id: Optional[int] = Field(default=None, sa_column=Column(Integer, primary_key=True, autoincrement=True))
     name: str = Field(index=True, unique=True)
     
     # Relationship
