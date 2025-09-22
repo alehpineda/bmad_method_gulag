@@ -1,0 +1,43 @@
+# Requirements Trace: Pokedex ETL Fullstack MVP
+
+## Overview
+This document traces the requirements from the PokeAPI Pokemon endpoint (GET /api/v2/pokemon/{id or name}/) to the Pokedex app features. Analysis based on sample JSONs (Bulbasaur #1, Caterpie #10, Voltorb #100, Gholdengo #1000) and PokeAPI v2 docs. MVP scope: Core Pokemon info only (id, name, height, weight, types, sprites, stats). Excludes: abilities, moves, evolutions, cries, forms (beyond default), game_indices, held_items, location_area_encounters, order, past_types/abilities, species (use name/id).
+
+**Sources**:
+- PokeAPI Docs: https://pokeapi.co/docs/v2#pokemon-section (Pokemon resource: Detailed species data including physical attributes, types, sprites, stats).
+- Samples: docs/1.json (Bulbasaur: Grass/Poison, sprites with front_default, stats like hp:45), docs/10.json (Caterpie: Bug, basic sprites/stats), docs/100.json (Voltorb: Electric, no sprites variants), docs/1000.json (Gholdengo: Steel/Ghost, modern stats/sprites).
+
+**MVP Definition**: ETL fetches/normalizes data to SQLite (3NF); FastAPI CRUD API exposes it; HTMX/Tailwind UI displays one Pokemon with sprite toggles (default front, female/shiny/gens if available). No search/multi-Pokemon yet—focus on single view for demo.
+
+## API Fields to App Trace
+Traces PokeAPI fields to DB schema, API endpoints, UI components. Only MVP fields included; others ignored for scope.
+
+### Core Fields
+| PokeAPI Field | Description (from Docs/Samples) | DB Mapping (3NF) | API Endpoint Usage | UI Feature |
+|---------------|---------------------------------|------------------|--------------------|------------|
+| **id** | Unique integer ID (e.g., 1 for Bulbasaur). | pokemon.id (PK, int) | GET /pokemon/{id or name} (query param) | Display as "#1 Bulbasaur" header. |
+| **name** | String name (e.g., "bulbasaur"). | pokemon.name (unique, varchar) | GET /pokemon/{id or name} (path/query) | Title/display (capitalized: "Bulbasaur"). |
+| **height** | Decimeters (e.g., 7 for Bulbasaur). | pokemon.height (int) | Response: pokemon.height | Display: "Height: 0.7 m" (convert to meters). |
+| **weight** | Hectograms (e.g., 69 for Bulbasaur). | pokemon.weight (int) | Response: pokemon.weight | Display: "Weight: 6.9 kg" (convert to kg). |
+| **types** | Array of {slot: int, type: {name: string, url: string}} (e.g., Bulbasaur: Grass slot1, Poison slot2). | pokemon_types (junction: pokemon_id FK, type_id FK); types (id PK, name varchar). | Response: array of type names (e.g., ["grass", "poison"]) | Badges/icons: "Grass" "Poison" (multi-type support). |
+| **sprites** | Object with variants (e.g., front_default: URL; versions with gens; other: official-artwork). Samples show front_default always; shiny/female optional (e.g., Bulbasaur has shiny, Voltorb lacks female). | sprites (pokemon_id FK, variant varchar PK, url varchar) or JSON in pokemon.sprites (for simplicity in MVP). | Response: object with urls (e.g., {default: "...", shiny: "...", female: null}) | Toggle buttons: Default front, Shiny, Female (if avail.), Gen variants (e.g., Gen1-9 if in sprites.versions). Fallback to default. |
+| **stats** | Array of {base_stat: int, effort: int, stat: {name: string, url: string}} (e.g., Bulbasaur: hp:45, attack:49, etc.). 6 stats: hp, attack, defense, special-attack, special-defense, speed. | pokemon_stats (pokemon_id FK, stat_name varchar PK, base_stat int). | Response: array of {name: "hp", base_stat: 45} | Progress bars/chart: "HP: 45/255" (visual bars for all 6; color-coded). |
+
+### Excluded Fields (Out of MVP Scope)
+- **abilities, moves, evolutions**: Complex arrays/objects; ignored per idea.md (focus on "most common information").
+- **cries, forms, game_indices, held_items, location_area_encounters, order, past_*, species**: Not core; species redundant with name/id.
+- **NFRs from Docs**: API rate limits (use mocks/samples for ETL dev); Pagination not needed (single Pokemon).
+
+## Requirements Elicitation
+- **Functional**: ETL batch (Typer) fetches via /pokemon/{id}, parses/normalizes to DB. API: CRUD on pokemon (GET by id/name). UI: Load by input, display fields, HTMX for sprite swaps (AJAX to API).
+- **Non-Functional**: ETL <5s per Pokemon (httpx async?); DB 3NF (no redundancy, e.g., types normalized); UI responsive (Tailwind mobile-first); Accessibility (alt text for sprites, ARIA for toggles).
+- **Assumptions**: Use samples for schema dev (live API for demo data). Default to English names. Handle missing variants (e.g., no female sprites → hide toggle).
+- **Risks**: API changes (pin v2); Optional fields (e.g., no shiny → graceful fallback).
+- **Traceability**: All MVP features map to PokeAPI Pokemon resource. Future: Extend to /pokemon-species for evolutions if scoped.
+
+## Next: Story Refinement (PO Input)
+As PO, refine into stories:
+- Story 1.1 AC Met: Trace complete; MVP defined.
+- Potential Stories: "As ETL dev, parse/normalize core fields from JSON to 3NF DB" (AC: Insert Bulbasaur sample succeeds).
+
+Generated by BMad Analyst on [Current Date]. Version: v1.0.
