@@ -1,0 +1,30 @@
+gate:
+  id: epic-2-3-phase2-architecture-design
+  version: 1.0
+  date: 2025-09-21
+  phase: Architecture & Design
+  epics: [2, 3]
+  status: PASS
+  concerns: low
+  findings:
+    - id: ACC-001
+      severity: low
+      description: UI stub lacks full ARIA on toggles/progress bars.
+      action: Add role="progressbar" aria-valuenow in stat bars; Lighthouse audit.
+    - id: UI-002
+      severity: low
+      description: Hardcoded endpoints in html stub (e.g., /pokemon/1).
+      action: Use templating (Jinja in FastAPI) for dynamic id/variants.
+  risks:
+    - id: PERF-001
+      score: 6
+      status: partially_mitigated
+  nfrs:
+    performance: green
+    accessibility: yellow
+    usability: green
+    reliability: green
+  traceability: 100%
+  waiver: none
+  approver: Quinn (QA)
+  next: Proceed to Phase 3 Implementation
