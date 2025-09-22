@@ -2,19 +2,35 @@
 name = "pokedex-mvp"
 version = "0.1.0"
 description = "Pokedex ETL Fullstack MVP"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlmodel",
+    "sqlalchemy",
+    "pydantic",
+    "typer",
+    "httpx",
+    "playwright",  # for e2e tests
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.uv.dependency-groups]
+dev = [
     "pytest",
     "mypy",
     "ruff",
+    "pytest-cov",
+    "playwright",  # install browsers separately
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
