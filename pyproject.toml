@@ -1,0 +1,20 @@
+[project]
+name = "pokedex-mvp"
+version = "0.1.0"
+description = "Pokedex ETL Fullstack MVP"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "mypy",
+    "ruff",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
