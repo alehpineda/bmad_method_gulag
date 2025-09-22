@@ -25,8 +25,7 @@ packages = ["src"]
 dev = [
     "pytest >=7.0",
     "ruff",
-    "mypy",
-    "types-all"  # For mypy stubs if needed
+    "mypy"
 ]
 
 [tool.pytest.ini_options]
