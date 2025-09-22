@@ -1,10 +1,8 @@
 import pytest
-from unittest.mock import patch
 from fastapi.testclient import TestClient
 from src.api.main import app
-from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, engine, Session, select
-from src.schemas import PokemonResponse, SpriteResponse
-from sqlmodel import SQLModel, create_engine
+from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite
+from sqlmodel import SQLModel, create_engine, Session, select
 
 @pytest.fixture
 def test_client():

@@ -1,10 +1,9 @@
 import pytest
-from unittest.mock import AsyncMock, patch
 from src.etl.main import normalize_data, insert_idempotent, SAMPLE_BULBASAUR
 from src.schemas import PokemonData
-from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, Session, select
+from src.models import Pokemon, PokemonType, PokemonStat, Sprite
 from sqlalchemy import create_engine
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Session, select
 
 @pytest.fixture
 def test_engine():
@@ -46,7 +45,6 @@ def test_insert_idempotent(test_session):
     assert len(sprites) >= 2  # At least default and shiny
     
     # Idempotent: Re-run no change
-    initial_pokemon_count = test_session.exec(select(Pokemon).where(Pokemon.id == 1)).first() is not None
     insert_idempotent(test_session, data)
     assert test_session.exec(select(Pokemon).where(Pokemon.id == 1)).first() is not None  # Still one
     # Counts unchanged (simplified check)

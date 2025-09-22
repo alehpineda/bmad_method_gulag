@@ -82,8 +82,15 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
             type_obj = Type(name=t["type_name"])
             session.add(type_obj)
             session.flush()
-        type_id = type_obj.id  # type: int
-        pt = PokemonType(pokemon_id=p.id, type_id=type_id, slot=t["slot"])  # type: ignore [arg-type]
+        
+        # Extract the type object from Row if needed
+        if hasattr(type_obj, '__iter__') and not isinstance(type_obj, str):
+            type_obj = type_obj[0]
+        
+        if type_obj.id is None:
+            raise ValueError(f"Type {t['type_name']} was not properly saved to database")
+        
+        pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])  # type: ignore [arg-type]
         session.add(pt)
 
     for s in norm_data.stats:
@@ -97,8 +104,8 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
     session.commit()
     typer.echo(f"Inserted {norm_data.name} (ID: {norm_data.id}) successfully.")
 
-@app.command("load")
-def load_pokemon(
+@app.command()
+def load(
     identifier: int = typer.Argument(help="Pokemon ID to load"),
     sample: bool = typer.Option(False, "--sample", help="Use sample data instead of API")
 ):
