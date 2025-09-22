@@ -3,16 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokedex UI - Hello World</title>
+    <title>Pokedex MVP</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Press Start 2P', cursive; }
+    </style>
 </head>
-<body class="bg-red-500 text-white p-8">
-    <h1 class="text-4xl font-bold">Pokedex Demo - Initial Setup</h1>
-    <p class="mt-4">Hello World! HTMX and Tailwind loaded.</p>
-    <button hx-get="/api/" hx-target="#result" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
-        Fetch API Message
-    </button>
-    <div id="result" class="mt-4"></div>
+<body class="bg-white text-black min-h-screen p-4">
+    <!-- Header -->
+    <header class="bg-red-500 text-white text-center text-2xl p-4 mb-4 rounded-lg shadow-lg">
+        POKEDEX
+    </header>
+
+    <!-- Search Input -->
+    <div class="max-w-md mx-auto mb-4">
+        <input 
+            type="text" 
+            id="search" 
+            placeholder="Enter ID or name (e.g., 1 or bulbasaur)" 
+            class="w-full p-2 border-2 border-red-500 rounded text-black"
+            hx-post="/pokemon" 
+            hx-trigger="keyup[enter] changed delay:500ms" 
+            hx-target="#pokemon-card" 
+            hx-indicator="#loading"
+            hx-on::after-request="if(event.detail.xhr.status === 404) { document.getElementById('error').classList.remove('hidden'); }"
+        >
+        <button 
+            hx-post="/pokemon" 
+            hx-include="#search" 
+            hx-target="#pokemon-card" 
+            hx-indicator="#loading"
+            class="w-full mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+        >
+            Load Pokemon
+        </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="htmx-indicator hidden text-center text-red-500 animate-spin">Loading...</div>
+
+    <!-- Error Display -->
+    <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        Pokemon not found. Try a valid ID or name.
+    </div>
+
+    <!-- Pokemon Card (Target for HTMX) -->
+    <div id="pokemon-card" class="max-w-4xl mx-auto bg-white border-4 border-red-500 rounded-lg shadow-lg p-4 hidden">
+        <!-- Header -->
+        <h1 id="header" class="text-3xl font-bold text-center mb-4"></h1>
+
+        <!-- Physical Stats -->
+        <div id="physical" class="grid grid-cols-2 gap-4 mb-4 p-4 border-b"></div>
+
+        <!-- Types -->
+        <div id="types" class="flex justify-center gap-2 mb-4 p-4"></div>
+
+        <!-- Stats Bars -->
+        <div id="stats" class="grid md:grid-cols-2 gap-4 mb-4 p-4"></div>
+
+        <!-- Sprite Viewer -->
+        <div id="sprites" class="flex flex-col md:flex-row items-center gap-4 p-4 border-t">
+            <div class="flex flex-col items-center">
+                <img 
+                    id="sprite-img" 
+                    src="" 
+                    alt="Pokemon sprite" 
+                    class="w-48 h-48 border-4 border-red-500 object-contain mb-4"
+                    role="img" 
+                    aria-label="Current Pokemon sprite"
+                >
+                <div id="sprite-error" class="hidden text-red-500 mb-2">Variant unavailable</div>
+                <div class="flex gap-2">
+                    <button 
+                        class="bg-white border-2 border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-500 hover:text-white" 
+                        hx-get="/pokemon/1/sprites/front_default" 
+                        hx-target="#sprite-img" 
+                        hx-swap="attr:src" 
+                        aria-label="Default sprite"
+                    >
+                        Default
+                    </button>
+                    <button 
+                        hx-get="/pokemon/1/sprites/front_shiny" 
+                        hx-target="#sprite-img" 
+                        hx-swap="attr:src" 
+                        aria-label="Shiny sprite"
+                    >
+                        Shiny
+                    </button>
+                    <button 
+                        hx-get="/pokemon/1/sprites/back_female" 
+                        hx-target="#sprite-img" 
+                        hx-swap="attr:src" 
+                        aria-label="Female sprite"
+                    >
+                        Female
+                    </button>
+                    <!-- Add more toggles dynamically from API -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Minimal JS for fallbacks (HTMX onError)
+        document.body.addEventListener('htmx:afterRequest', function(e) {
+            if (e.detail.xhr.status === 404 && e.detail.target.id === 'sprite-img') {
+                e.detail.target.src = e.detail.target.dataset.defaultSrc || '';  // Fallback to default
+                document.getElementById('sprite-error').classList.remove('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
