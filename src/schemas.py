@@ -9,9 +9,9 @@ class TypeInfo(BaseModel):
     name: str
     slot: int
 
-class Sprite(BaseModel):
-    variant: str
-    url: Optional[str] = None
+class SpriteResponse(BaseModel):
+    url: Optional[str]
+    available: bool
 
 class PokemonResponse(BaseModel):
     id: int
