@@ -384,7 +384,7 @@ requires-dist = [
     { name = "playwright", specifier = "==1.40.0" },
     { name = "pydantic", specifier = "==2.5.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
-    { name = "python-multipart", specifier = ">=0.0.6" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sqlalchemy", specifier = "==2.0.23" },
     { name = "sqlmodel", specifier = "==0.0.14" },
