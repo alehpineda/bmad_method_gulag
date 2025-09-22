@@ -84,3 +84,31 @@ def test_get_sprite(test_client, test_db):
 def test_get_sprite_missing(test_client, test_db):
     response = test_client.get("/pokemon/1/sprites/front_female")
     assert response.status_code == 404
+
+def test_api_integration_joins(test_client, test_db):
+    # Test full join query for Bulbasaur
+    response = test_client.get("/pokemon/1")
+    data = response.json()
+    assert len(data["types"]) == 2
+    assert "grass" in [t["name"] for t in data["types"]]
+    assert "poison" in [t["name"] for t in data["types"]]
+    assert len(data["stats"]) == 6
+    assert data["stats"][0]["name"] == "hp" and data["stats"][0]["base_stat"] == 45
+    assert data["sprites"]["front_female"] is None  # Null handling
+    assert data["height_m"] == 0.7
+    assert data["weight_kg"] == 6.9
+
+def test_api_performance(test_client, test_db):
+    import time
+    start = time.time()
+    response = test_client.get("/pokemon/1")
+    end = time.time()
+    assert end - start < 0.1  # <100ms
+    assert response.status_code == 200
+
+def test_post_search(test_client, test_db):
+    response = test_client.post("/pokemon", data={"identifier": "1"})
+    data = response.json()
+    assert response.status_code == 200
+    assert data["id"] == 1
+    assert len(data["types"]) == 2

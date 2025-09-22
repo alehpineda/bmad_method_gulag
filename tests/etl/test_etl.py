@@ -50,3 +50,21 @@ def test_insert_idempotent(test_session):
     insert_idempotent(test_session, data)
     assert test_session.exec(select(Pokemon).where(Pokemon.id == 1)).first() is not None  # Still one
     # Counts unchanged (simplified check)
+
+def test_etl_timing_and_idempotency(test_session):
+    import time
+    data = normalize_data(SAMPLE_BULBASAUR)
+    start = time.time()
+    insert_idempotent(test_session, data)
+    end = time.time()
+    assert end - start < 5.0  # <5s
+    test_session.commit()
+    
+    # Idempotent second run
+    start2 = time.time()
+    insert_idempotent(test_session, data)
+    end2 = time.time()
+    assert end2 - start2 < 1.0  # Faster on skip
+    # No new rows
+    pokemon_count = test_session.exec(select(Pokemon).where(Pokemon.id == 1)).count()
+    assert pokemon_count == 1
