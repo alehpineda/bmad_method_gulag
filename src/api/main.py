@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from typing import Optional
-from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, engine, Session as DBSession, select
+from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, engine, Session as DBSession, select, create_db_and_tables
 from src.schemas import PokemonResponse, SpriteResponse, TypeInfo, Stat
 from sqlmodel import func  # Not used but for potential
 
@@ -15,6 +15,10 @@ def get_db():
         db.close()
 
 app = FastAPI(title="Pokedex API", description="Pokedex MVP API")
+
+@app.on_event("startup")
+def startup_event():
+    create_db_and_tables()
 
 # Mount UI
 app.mount("/ui", StaticFiles(directory="public/ui"), name="ui")
@@ -66,7 +70,7 @@ def get_pokemon(identifier: str, db: DBSession = Depends(get_db)):
 
 @app.get("/pokemon/{id}/sprites/{variant}", response_model=SpriteResponse)
 def get_sprite(id: int, variant: str, db: DBSession = Depends(get_db)):
-    sprite = db.exec(select(Sprite).where(Sprite.pokemon_id == id, Sprite.variant == variant)).first()
+    sprite = db.exec(select(Sprite).where(Sprite.pokemon_id == id, Sprite.variant == variant)).first()  # type: ignore [attr-defined]
     if not sprite:
         raise HTTPException(status_code=404, detail="Sprite not found")
     return SpriteResponse(url=sprite.url, available=bool(sprite.url))

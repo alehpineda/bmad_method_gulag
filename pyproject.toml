@@ -21,6 +21,14 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
+[project.optional-dependencies]
+dev = [
+    "pytest >=7.0",
+    "ruff",
+    "mypy",
+    "types-all"  # For mypy stubs if needed
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"

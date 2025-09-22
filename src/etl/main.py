@@ -3,8 +3,8 @@ import typer
 from typing import Dict, Any
 import httpx
 from sqlmodel import Session, create_engine, select
-from ..models import Pokemon, Type, PokemonType, PokemonStat, Sprite
-from ..schemas import PokemonData
+from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, create_db_and_tables
+from src.schemas import PokemonData
 
 app = typer.Typer(help="Pokedex ETL CLI")
 
@@ -81,15 +81,16 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
             type_obj = Type(name=t["type_name"])
             session.add(type_obj)
             session.flush()
-        pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])
+        type_id = type_obj.id  # type: int
+        pt = PokemonType(pokemon_id=p.id, type_id=type_id, slot=t["slot"])  # type: ignore [arg-type]
         session.add(pt)
 
     for s in norm_data.stats:
-        ps = PokemonStat(pokemon_id=p.id, stat_name=s["stat_name"], base_stat=s["base_stat"])
+        ps = PokemonStat(pokemon_id=p.id, stat_name=s["stat_name"], base_stat=s["base_stat"])  # type: ignore [arg-type]
         session.add(ps)
 
     for variant, url in norm_data.sprites.items():
-        sp = Sprite(pokemon_id=p.id, variant=variant, url=url)
+        sp = Sprite(pokemon_id=p.id, variant=variant, url=url)  # type: ignore [arg-type]
         session.add(sp)
 
     session.commit()
@@ -98,6 +99,7 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
 @app.command()
 def load(identifier: int, sample: bool = typer.Option(False, "--sample")):
     """Load and insert Pokemon data by ID (use --sample for fallback)."""
+    create_db_and_tables()
     if sample:
         data = SAMPLE_BULBASAUR
     else:

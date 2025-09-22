@@ -4,7 +4,7 @@
 1. Clone the repo: `git clone &lt;repo-url&gt;`
 2. Navigate: `cd bmad_method_gulag`
 3. Install Python 3.12+ and uv: Follow https://docs.astral.sh/uv/getting-started/installation/
-4. Sync dependencies: `uv sync`
+4. Sync dependencies: `uv sync --dev`
 5. (Optional) Set up virtual env if not using uv: `uv venv && source .venv/bin/activate`
 
 ## Database Initialization
@@ -32,7 +32,7 @@ Run these to mimic GitHub Actions:
 1. Lint: `uv run ruff check .`
 2. Typecheck: `uv run mypy src/`
 3. Tests: `uv run pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=80`
-4. Build: `uv sync --dev`
+4. Build: `uv sync --dev` (already includes dev deps)
 
 ## Deployment
 ### Local
@@ -52,9 +52,11 @@ As above.
 - Post-deploy: Update index.html JS fetch URL to your Railway API (e.g., https://your-railway.app)
 
 ## Troubleshooting
-- DB not found: Run ETL first.
+- DB not found: Run ETL first (tables auto-created).
 - Port in use: Change --port.
+- Import errors: Ensure running from project root; src/ has __init__.py files.
 - Coverage low: Run `uv run pytest --cov=src` to check.
+- Dev tools missing: Run `uv sync --dev`.
 - For more Pokemon: Edit ETL to load range, e.g., load 1-151.
 
 ## Monitoring & Logs
