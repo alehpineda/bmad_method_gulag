@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "Pokedex ETL Fullstack MVP"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "sqlmodel",
-    "sqlalchemy",
-    "pydantic",
-    "typer",
-    "httpx",
-    "playwright",  # for e2e tests
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0.1",
+    "sqlmodel==0.0.14",
+    "sqlalchemy==2.0.23",
+    "pydantic==2.5.0",
+    "typer==0.9.0",
+    "httpx==0.25.2",
+    "playwright==1.40.0"
 ]
 
 [build-system]
@@ -23,11 +23,10 @@ packages = ["src"]
 
 [tool.uv.dependency-groups]
 dev = [
-    "pytest",
-    "mypy",
-    "ruff",
-    "pytest-cov",
-    "playwright",  # install browsers separately
+    "pytest==7.4.3",
+    "mypy==1.7.1",
+    "ruff==0.1.5",
+    "pytest-cov==4.1.0"
 ]
 
 [tool.pytest.ini_options]

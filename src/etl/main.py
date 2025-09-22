@@ -104,9 +104,7 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
     session.commit()
     typer.echo(f"Inserted {norm_data.name} (ID: {norm_data.id}) successfully.")
 
-@app.command()
-def load(identifier: int, sample: bool = False):
-    """Load and insert Pokemon data by ID (use --sample for fallback)."""
+@app.command()\ndef load(identifier: int, sample: bool = typer.Option(False, "--sample")):\n    \"\"\"Load and insert Pokemon data by ID (use --sample for fallback).\"\"\"
     if sample:
         data = SAMPLE_BULBASAUR
     else:
@@ -117,4 +115,4 @@ def load(identifier: int, sample: bool = False):
     typer.echo("ETL process completed.")
 
 if __name__ == "__main__":
-    app()
+    typer.run(app)
