@@ -189,8 +189,17 @@
             .then(async response => {
                 document.getElementById('loading').classList.add('hidden');
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    document.getElementById('error').textContent = errorData.detail || 'Pokemon not found.';
+                    let errorMessage = 'Pokemon not found.';
+                    try {
+                        const errorData = await response.json();
+                        if (errorData && errorData.detail) {
+                            errorMessage = errorData.detail;
+                        }
+                    } catch (err) {
+                        // If response is not valid JSON, keep default error message
+                        console.error('Error parsing error response as JSON:', err);
+                    }
+                    document.getElementById('error').textContent = errorMessage;
                     document.getElementById('error').classList.remove('hidden');
                     document.getElementById('pokemon-card').classList.add('hidden');
                     return;
