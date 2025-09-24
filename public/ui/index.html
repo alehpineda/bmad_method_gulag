@@ -177,7 +177,38 @@
         document.getElementById('search-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const identifier = document.getElementById('search-input').value;
-            htmx.ajax('POST', '/pokemon', {values: {identifier: identifier}, target: '#pokemon-card'});
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('error').classList.add('hidden');
+            fetch('/pokemon', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({identifier: identifier})
+            })
+            .then(async response => {
+                document.getElementById('loading').classList.add('hidden');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    document.getElementById('error').textContent = errorData.detail || 'Pokemon not found.';
+                    document.getElementById('error').classList.remove('hidden');
+                    document.getElementById('pokemon-card').classList.add('hidden');
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    populateCard(data);
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').textContent = 'Error loading Pokemon.';
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('pokemon-card').classList.add('hidden');
+                console.error('Fetch error:', err);
+            });
         });
     </script>
 </body>
