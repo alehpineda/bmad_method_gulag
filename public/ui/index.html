@@ -182,9 +182,9 @@
             fetch('/pokemon', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: JSON.stringify({identifier: identifier})
+                body: new URLSearchParams({identifier: identifier}).toString()
             })
             .then(async response => {
                 document.getElementById('loading').classList.add('hidden');
