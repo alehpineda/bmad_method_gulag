@@ -13,10 +13,6 @@ dependencies = [
     "httpx==0.25.2",
     "playwright==1.40.0",
     "python-multipart>=0.0.20",
-    "ruff>=0.13.1",
-    "mypy>=1.18.2",
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
 ]
 
 [build-system]
