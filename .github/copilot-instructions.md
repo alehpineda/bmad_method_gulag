@@ -124,7 +124,7 @@ uv sync --dev
 uv add python-multipart ruff mypy pytest pytest-cov
 
 # Load sample data (required before API testing)
-uv run python -c "from src.etl.main import *; from src.models import create_db_and_tables; create_db_and_tables(); data = SAMPLE_BULBASAUR; norm = normalize_data(data); exec('with get_session() as session: insert_idempotent(session, norm)'); print('ETL completed')"
+uv run python -c "from src.etl.main import *; from src.models import create_db_and_tables; create_db_and_tables(); data = SAMPLE_BULBASAUR; norm = normalize_data(data); with get_session() as session: insert_idempotent(session, norm); print('ETL completed')"
 
 # Start development server
 uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
