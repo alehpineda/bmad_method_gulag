@@ -3,7 +3,14 @@ import typer
 from typing import Dict, Any
 import httpx
 from sqlmodel import Session, create_engine, select
-from src.models import Pokemon, Type, PokemonType, PokemonStat, Sprite, create_db_and_tables
+from src.models import (
+    Pokemon,
+    Type,
+    PokemonType,
+    PokemonStat,
+    Sprite,
+    create_db_and_tables,
+)
 from src.schemas import PokemonData
 
 # Create typer app
@@ -14,7 +21,10 @@ SAMPLE_BULBASAUR = {
     "name": "bulbasaur",
     "height": 7,
     "weight": 69,
-    "types": [{"slot": 1, "type": {"name": "grass"}}, {"slot": 2, "type": {"name": "poison"}}],
+    "types": [
+        {"slot": 1, "type": {"name": "grass"}},
+        {"slot": 2, "type": {"name": "poison"}},
+    ],
     "stats": [
         {"base_stat": 45, "stat": {"name": "hp"}},
         {"base_stat": 49, "stat": {"name": "attack"}},
@@ -28,13 +38,15 @@ SAMPLE_BULBASAUR = {
         "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/1.png",
         "back_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png",
         "back_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/shiny/1.png",
-    }
+    },
 }
 
 engine = create_engine("sqlite:///pokedex.db")
 
+
 def get_session():
     return Session(engine)
+
 
 async def fetch_pokemon(identifier: int) -> Dict[str, Any]:
     """Async fetch Pokemon data from PokeAPI with timeout and fallback."""
@@ -48,31 +60,62 @@ async def fetch_pokemon(identifier: int) -> Dict[str, Any]:
         typer.echo(f"Fetch failed: {e}; using sample data.")
         return SAMPLE_BULBASAUR
 
+
 def normalize_data(data: Dict[str, Any]) -> PokemonData:
     """Normalize fetched data: extract core fields, validate stats, skip null sprites."""
+
+    def flatten_sprites(
+        sprites_dict: Dict[str, Any], prefix: str = ""
+    ) -> Dict[str, str]:
+        """Recursively flatten nested sprite dicts to key: url pairs."""
+        flat = {}
+        for k, v in sprites_dict.items():
+            key = f"{prefix}_{k}" if prefix else k
+            if isinstance(v, dict):
+                flat.update(flatten_sprites(v, key))
+            elif isinstance(v, str):
+                flat[key] = v
+        return flat
+
     normalized = {
         "id": data["id"],
         "name": data["name"],
         "height": data["height"],
         "weight": data["weight"],
-        "types": [{"slot": t["slot"], "type_name": t["type"]["name"]} for t in data.get("types", [])],
-        "stats": [{"stat_name": s["stat"]["name"], "base_stat": s["base_stat"]} for s in data.get("stats", [])],
-        "sprites": {k: v for k, v in data.get("sprites", {}).items() if v is not None}
+        "types": [
+            {"slot": t["slot"], "type_name": t["type"]["name"]}
+            for t in data.get("types", [])
+        ],
+        "stats": [
+            {"stat_name": s["stat"]["name"], "base_stat": s["base_stat"]}
+            for s in data.get("stats", [])
+        ],
+        "sprites": flatten_sprites(data.get("sprites", {})),
     }
     if len(normalized["stats"]) != 6:
-        raise ValueError(f"Invalid stats count: expected 6, got {len(normalized['stats'])}")
+        raise ValueError(
+            f"Invalid stats count: expected 6, got {len(normalized['stats'])}"
+        )
     if len(normalized["types"]) not in (1, 2):
         typer.echo("Warning: Unusual number of types")
     return PokemonData(**normalized)
+
 
 def insert_idempotent(session: Session, norm_data: PokemonData):
     """Idempotent insert: Check existence, upsert related entities."""
     existing = session.exec(select(Pokemon).where(Pokemon.id == norm_data.id)).first()
     if existing:
-        typer.echo(f"Pokemon {norm_data.id} ({norm_data.name}) already exists; skipping.")
+        typer.echo(
+            f"Pokemon {norm_data.id} ({norm_data.name}) already exists; skipping."
+        )
         return
 
-    p = Pokemon(id=norm_data.id, name=norm_data.name, height=norm_data.height, weight=norm_data.weight)
+    p = Pokemon(
+        id=norm_data.id,
+        name=norm_data.name,
+        height=norm_data.height,
+        weight=norm_data.weight,
+    )
     session.add(p)
     session.flush()
 
@@ -82,16 +125,20 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
             type_obj = Type(name=t["type_name"])
             session.add(type_obj)
             session.flush()
-        
+
         # type_obj should be a Type object here, no extraction needed
         if type_obj.id is None:
-            raise ValueError(f"Type {t['type_name']} was not properly saved to database")
-        
+            raise ValueError(
+                f"Type {t['type_name']} was not properly saved to database"
+            )
+
         pt = PokemonType(pokemon_id=p.id, type_id=type_obj.id, slot=t["slot"])
         session.add(pt)
 
     for s in norm_data.stats:
-        ps = PokemonStat(pokemon_id=p.id, stat_name=s["stat_name"], base_stat=s["base_stat"])  # type: ignore [arg-type]
+        ps = PokemonStat(
+            pokemon_id=p.id, stat_name=s["stat_name"], base_stat=s["base_stat"]
+        )  # type: ignore [arg-type]
         session.add(ps)
 
     for variant, url in norm_data.sprites.items():
@@ -101,10 +148,13 @@ def insert_idempotent(session: Session, norm_data: PokemonData):
     session.commit()
     typer.echo(f"Inserted {norm_data.name} (ID: {norm_data.id}) successfully.")
 
+
 @app.command()
 def load(
     identifier: int = typer.Argument(help="Pokemon ID to load"),
-    sample: bool = typer.Option(False, "--sample", help="Use sample data instead of API")
+    sample: bool = typer.Option(
+        False, "--sample", help="Use sample data instead of API"
+    ),
 ):
     """Load and insert Pokemon data by ID (use --sample for fallback)."""
     create_db_and_tables()
@@ -116,6 +166,7 @@ def load(
     with get_session() as session:
         insert_idempotent(session, norm)
     typer.echo("ETL process completed.")
+
 
 if __name__ == "__main__":
     app()
